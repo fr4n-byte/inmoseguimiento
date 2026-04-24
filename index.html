@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="InmoSeguimiento" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#2B4D3F" />
-<link rel="manifest" href="/manifest.json" />
+<link rel="manifest" href="manifest.json" />
 <title>InmoSeguimiento</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
@@ -600,7 +600,7 @@ document.getElementById('sort-icon').textContent = ordenAsc ? '↑' : '↓';
 document.getElementById('sort-label').textContent = ordenAsc ? 'Más antiguo' : 'Más reciente';
 renderCards();
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(() => {});
+  navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 </script>
 </body>
