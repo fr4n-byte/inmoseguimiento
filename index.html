@@ -298,6 +298,7 @@
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/inmoseguimiento/sw.js').catch(() => {});
 }
+const HOY = new Date();
 HOY.setHours(0,0,0,0);
 let clientes = JSON.parse(localStorage.getItem('inmo_clientes') || 'null') || [
   { id:1, tel:'70012345', nombre:'Juan Mamani', prop:'Depto 2 dorm. Miraflores', estado:'pensando', nota:'Crédito, busca zona norte, presupuesto 80k', diasSeg:5, fechaCreacion: new Date(HOY - 6*86400000).toISOString(), fechaContacto: new Date(HOY - 6*86400000).toISOString() },
