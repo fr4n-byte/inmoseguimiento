@@ -28,26 +28,16 @@
   .app-header { background: var(--accent); color: white; padding: 10px 20px; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; }
   .app-header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
   .app-header .subtitle { font-size: 11px; opacity: 0.65; margin-top: 1px; font-family: var(--font-mono); }
-  .stats-bar { display: none; }
-  .stat-item { display: none; }
-  .stat-num { display: none; }
-  .stat-label { display: none; }
-  .tabs-wrap { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 16px; display: flex; gap: 0; overflow-x: auto; position: sticky; top: 44px; z-index: 98; }
+  .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); position: sticky; top: 44px; z-index: 99; }
+  .stat-item { background: var(--surface); padding: 7px 8px; text-align: center; }
+  .stat-num { font-size: 18px; font-weight: 600; letter-spacing: -0.03em; }
+  .stat-num.danger { color: var(--danger); }
+  .stat-num.warn { color: var(--warn); }
+  .stat-label { font-size: 10px; color: var(--text3); margin-top: 1px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .tabs-wrap { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 16px; display: flex; gap: 0; overflow-x: auto; position: sticky; top: 88px; z-index: 98; }
   .tabs-wrap::-webkit-scrollbar { display: none; }
   .tab { padding: 9px 13px; font-size: 13px; font-weight: 500; color: var(--text3); border: none; background: none; cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; font-family: var(--font); transition: color 0.15s; }
   .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-  .search-overlay { position: fixed; inset: 0; z-index: 190; background: transparent; display: none; }
-  .search-overlay.visible { display: block; }
-  .search-panel { position: fixed; bottom: 68px; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius) var(--radius) 0 0; padding: 14px 16px 16px; box-shadow: 0 -4px 24px rgba(0,0,0,0.10); z-index: 191; transform: translateY(100%); transition: transform 0.2s ease; }
-  .search-panel.visible { transform: translateY(0); }
-  .search-container { position: relative; display: flex; align-items: center; }
-  .search-input { width: 100%; padding: 11px 40px 11px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 15px; font-family: var(--font); background: var(--bg); color: var(--text); outline: none; transition: border-color 0.15s, background 0.15s; }
-  .search-input:focus { border-color: var(--accent); background: white; }
-  .search-input::placeholder { color: var(--text3); }
-  .search-clear { position: absolute; right: 10px; background: none; border: none; font-size: 18px; color: var(--text3); cursor: pointer; padding: 4px 6px; display: none; opacity: 0.7; }
-  .search-clear.visible { display: block; }
-  .search-panel-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
-  .nav-item.search-active { color: var(--accent); }
   .content { padding: 16px; }
   .client-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; position: relative; overflow: hidden; }
   .client-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px; }
@@ -299,19 +289,10 @@
   </div>
   <div class="content" id="agenda-container"></div>
 </div>
-<div class="search-overlay" id="search-overlay" onclick="cerrarBusqueda()"></div>
-<div class="search-panel" id="search-panel">
-  <div class="search-panel-label">Buscar cliente</div>
-  <div class="search-container">
-    <input type="text" class="search-input" id="search-input" placeholder="Nombre, teléfono o propiedad..." autocomplete="off" />
-    <button class="search-clear" id="search-clear" onclick="limpiarBusqueda()">✕</button>
-  </div>
-</div>
 <div class="bottom-nav">
   <button class="nav-item active" id="nav-hoy" onclick="showView('lista')"><span class="nav-icon">📋</span><span>Seguimiento</span></button>
   <button class="nav-item" id="nav-agenda" onclick="showView('agenda')"><span class="nav-icon">📅</span><span>Agenda</span></button>
   <button class="nav-item" id="nav-nuevo" onclick="showView('nuevo')"><span class="nav-icon">➕</span><span>Nuevo</span></button>
-  <button class="nav-item" id="nav-buscar" onclick="toggleBusqueda()"><span class="nav-icon">🔍</span><span>Buscar</span></button>
 </div>
 <script>
 if ('serviceWorker' in navigator) {
@@ -327,7 +308,6 @@ let clientes = JSON.parse(localStorage.getItem('inmo_clientes') || 'null') || [
 let detalleId = null;
 let filtroActual = 'todos';
 let ordenAsc = localStorage.getItem('inmo_orden') === 'asc';
-let textoBusqueda = '';
 function guardar() { localStorage.setItem('inmo_clientes', JSON.stringify(clientes)); }
 function toggleDrawer() {
   const drawer = document.getElementById('drawer');
@@ -380,34 +360,6 @@ function toggleOrden() {
   document.getElementById('sort-label').textContent = ordenAsc ? 'Más antiguo' : 'Más reciente';
   renderCards();
 }
-function normalizar(str) {
-  return (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-}
-function limpiarBusqueda() {
-  textoBusqueda = '';
-  document.getElementById('search-input').value = '';
-  document.getElementById('search-clear').classList.remove('visible');
-  renderCards();
-}
-function toggleBusqueda() {
-  const panel = document.getElementById('search-panel');
-  const overlay = document.getElementById('search-overlay');
-  const btn = document.getElementById('nav-buscar');
-  const abierto = panel.classList.contains('visible');
-  if (abierto) {
-    cerrarBusqueda();
-  } else {
-    panel.classList.add('visible');
-    overlay.classList.add('visible');
-    btn.classList.add('search-active');
-    setTimeout(() => document.getElementById('search-input').focus(), 220);
-  }
-}
-function cerrarBusqueda() {
-  document.getElementById('search-panel').classList.remove('visible');
-  document.getElementById('search-overlay').classList.remove('visible');
-  document.getElementById('nav-buscar').classList.remove('search-active');
-}
 function waLink(tel) {
   const limpio = tel.replace(/\D/g, '');
   const numero = limpio.startsWith('591') ? limpio : '591' + limpio;
@@ -443,12 +395,6 @@ function renderCards() {
   else if (filtroActual === 'hoy') lista = lista.filter(c => c.estado !== 'cerrado' && !c.urgenteManual && diasRestantes(c) === 0);
   else if (filtroActual === 'ok') lista = lista.filter(c => c.estado !== 'cerrado' && !c.urgenteManual && diasRestantes(c) > 0);
   else lista = lista.filter(c => c.estado !== 'cerrado');
-  if (textoBusqueda) {
-    const q = normalizar(textoBusqueda);
-    lista = lista.filter(c => {
-      return normalizar(c.nombre).includes(q) || normalizar(c.tel).includes(q) || normalizar(c.prop).includes(q);
-    });
-  }
   lista.sort((a,b) => {
     if (a.urgenteManual && !b.urgenteManual) return -1;
     if (!a.urgenteManual && b.urgenteManual) return 1;
@@ -456,13 +402,7 @@ function renderCards() {
     return ordenAsc ? fa - fb : fb - fa;
   });
   const cont = document.getElementById('cards-container');
-  if (lista.length === 0) {
-    const mensaje = textoBusqueda 
-      ? `<div class="empty-state"><div class="icon">🔍</div><p>No se encontraron clientes</p></div>`
-      : `<div class="empty-state"><div class="icon">✓</div><p>No hay clientes en esta categoría.<br>¡Todo al día!</p></div>`;
-    cont.innerHTML = mensaje;
-    return;
-  }
+  if (lista.length === 0) { cont.innerHTML = `<div class="empty-state"><div class="icon">✓</div><p>No hay clientes en esta categoría.<br>¡Todo al día!</p></div>`; return; }
   cont.innerHTML = lista.map(c => {
     const b = tipoBadge(c); const nombre = c.nombre || c.tel; const esCerrado = c.estado === 'cerrado';
     return `<div class="client-card ${b.tipo}">
@@ -728,7 +668,6 @@ function renderAgenda() {
 }
 function eliminarCliente() { if (!confirm('¿Eliminar este cliente?')) return; clientes = clientes.filter(x => x.id !== detalleId); guardar(); showView('lista'); showToast('Cliente eliminado'); }
 function showView(v) {
-  cerrarBusqueda();
   document.getElementById('view-lista').classList.toggle('hidden', v !== 'lista');
   document.getElementById('view-nuevo').classList.toggle('hidden', v !== 'nuevo');
   document.getElementById('view-detalle').classList.toggle('hidden', v !== 'detalle');
@@ -748,11 +687,6 @@ document.getElementById('header-date').textContent = `${dias[hoyFecha.getDay()]}
 document.getElementById('sort-icon').textContent = ordenAsc ? '↑' : '↓';
 document.getElementById('sort-label').textContent = ordenAsc ? 'Más antiguo' : 'Más reciente';
 renderCards();
-document.getElementById('search-input').addEventListener('input', function(e) {
-  textoBusqueda = normalizar(e.target.value);
-  document.getElementById('search-clear').classList.toggle('visible', e.target.value.length > 0);
-  renderCards();
-});
 if ('serviceWorker' in navigator) {
   const swCode = `
     const CACHE = 'inmo-v1';
